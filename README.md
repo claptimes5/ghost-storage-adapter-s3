@@ -9,8 +9,8 @@ For Ghost 0.10.x and 0.11.x support check out
 
 ```shell
 npm install ghost-storage-adapter-s3
-mkdir -p ./content/adapters/storage
-cp -r ./node_modules/ghost-storage-adapter-s3 ./content/adapters/storage/s3
+mkdir -p ./content/adapters/s3
+cp -r ./node_modules/ghost-storage-adapter-s3 ./content/adapters/s3
 ```
 
 ## Configuration
@@ -33,6 +33,7 @@ cp -r ./node_modules/ghost-storage-adapter-s3 ./content/adapters/storage/s3
   }
 }
 ```
+
 Note 1: Be sure to include "//" or the appropriate protocol within your assetHost string/variable to ensure that your site's domain is not prepended to the CDN URL.
 
 Note 2: if your s3 bucket enforces SSE use serverSideEncryption with the [appropriate supported](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property) value.
@@ -59,22 +60,26 @@ GHOST_STORAGE_ADAPTER_S3_ACL // optional
 ```
 
 ## AWS Configuration
+
 You'll likely want to configure a separate S3 bucket for your blog, a specific IAM role, and, optionally, CloudFront, to serve from a CDN.
 
 ### S3
+
 Create a new bucket. If you're using a CDN, the region isn't important. Once the bucket is created, select Static website hosting from the properties, and configure it to host a website.
 
 In the permissions, select Bucket Policy and use the policy generator with the folowing settings:
+
 - Select Type of Policy: **S3 Bucket Policy**
 - Effect: **Allow**
-- Principal: *
+- Principal: \*
 - AWS Service: **Amazon S3**
-- Actions: **GetBucket**
-- Amazon Resource Name (ARN): *your bucket's ARN, which you can get on its Bucket Policy page*
+- Actions: **GetObject**
+- Amazon Resource Name (ARN): _your bucket's ARN, which you can get on its Bucket Policy page_
 
 Generate the policy, copy it, then paste it in the Bucket policy editor and save.
 
 ### IAM
+
 You'll want to create a custom user role in IAM that just gives your Ghost installation the necessary permissions to manipulate objects in its S3 bucket.
 
 Go to IAM in your AWS console and add a new user. Give it a username specific to your blog, and select **Programmatic access** as the Access type.
@@ -114,22 +119,24 @@ Finally, create the user and copy the **Access key** and **Secret access key**, 
 At this point you could be done, but, optionally, you could put Amazon's CloudFront CDN in front of the bucket to speed things up.
 
 ### CloudFront
+
 CloudFront is a CDN that replicates objects in servers around the world so your blog's visitors will get your assets faster by using the server closest to them. It uses your S3 bucket as the "source of truth" that it populates its servers with.
 
 Got to CloudFront in AWS and choose to **Create a Distribution**. On the next screen you'll want to leave everything the same, except change the following:
+
 - Origin Domain Name: **Set this to the Endpoint url listed in the Static website hosting panel in the S3 bucket configuration**
 - Viewer Protocol Policy: **Redirect HTTP to HTTPS**
 - Compress Objects Automatically: **Yes**
 
 Then create the distribution.
 
-Next you'll want to configure your domain name to point a subdomain at CloudFront so you can serve static content through the CDN. Click on the distribution you just created and go the General tab. In Alternate Domain Names, add a subdomain from your url to be the CDN. For instance, if your domain is *yourdomain.com*, do something like *cdn.yourdomain.com*.
+Next you'll want to configure your domain name to point a subdomain at CloudFront so you can serve static content through the CDN. Click on the distribution you just created and go the General tab. In Alternate Domain Names, add a subdomain from your url to be the CDN. For instance, if your domain is _yourdomain.com_, do something like _cdn.yourdomain.com_.
 
 Next, you'll want to enable SSL. If you're already using Amazon's Route53 DNS service, you may already have an SSL certificate for your domain with a wildcard, if not, choose to create one for your subdomain. If you're using Route53 you can have them automatically add the proper entries to your DNS records for validation and have the certificate generated. If not, go through the alternate route.
 
 Next, configure the DNS entry for the subdomain for CloudFront. Go to your DNS configuration and add an A record for **cdn** (or whatever subdomain your chose), and then set it up as an alias that points at your CloudFront distribution URL. If you're using Route53 it will actually provide you with distribution as an option.
 
-Finally, in your configuration, use the subdomain for the CloudFront distribution as your setting for *assetHost*.
+Finally, in your configuration, use the subdomain for the CloudFront distribution as your setting for _assetHost_.
 
 ## License
 
